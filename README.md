@@ -3,6 +3,14 @@
 A pure Dart, lightweight, and powerful in-app network debugger for Flutter.
 `easy_debug` provides a floating overlay to monitor your Dio network requests in real-time, inspect details, and manage logs without connecting to an external debugger.
 
+## Screenshots
+
+<div style="text-align: center">
+  <img src="screenshots/screenshot_1.png" width="30%" />
+  <img src="screenshots/screenshot_2.png" width="30%" />
+  <img src="screenshots/screenshot_3.png" width="30%" />
+</div>
+
 ## Features
 
 *   🚀 **Pure Dart**: No native dependencies, works on all Flutter platforms (Android, iOS, Web, Desktop).
