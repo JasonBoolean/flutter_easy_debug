@@ -2,10 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:easy_debug/easy_debug.dart';
 import 'package:dio/dio.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
   // Config Easy Debug
   EasyDebugManager().updateConfig(
     const EasyDebugConfig(clearOnNavigation: false, maxLogCount: 50),
+  );
+
+  // Initialize Environments
+  await EasyDebugManager().init(
+    environments: [
+      const AppEnvironment(
+        name: 'Production',
+        baseUrl: 'https://jsonplaceholder.typicode.com',
+        isDefault: true,
+      ),
+      const AppEnvironment(
+        name: 'Development',
+        baseUrl: 'https://dev.jsonplaceholder.typicode.com',
+      ),
+    ],
   );
 
   runApp(const MyApp());
@@ -42,15 +59,41 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _dio.interceptors.add(EasyDebugDioInterceptor());
+
+    // 1. Set initial BaseUrl
+    _dio.options.baseUrl = EasyDebugManager().currentBaseUrl;
+
+    // 2. Listen for environment changes
+    EasyDebugManager().currentEnvNotifier.addListener(_onEnvChanged);
   }
 
-  Future<void> _makeRequest(String url, String method) async {
+  @override
+  void dispose() {
+    // 3. Remove listener to prevent memory leaks
+    EasyDebugManager().currentEnvNotifier.removeListener(_onEnvChanged);
+    super.dispose();
+  }
+
+  void _onEnvChanged() {
+    final newEnv = EasyDebugManager().currentEnvNotifier.value;
+    if (newEnv != null) {
+      setState(() {
+        _dio.options.baseUrl = newEnv.baseUrl;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Switched to ${newEnv.name} Environment')),
+      );
+    }
+  }
+
+  Future<void> _makeRequest(String path, String method) async {
+    // Now we just use the relative path, Dio handles the BaseUrl
     try {
       if (method == 'GET') {
-        await _dio.get(url);
+        await _dio.get(path);
       } else if (method == 'POST') {
         await _dio.post(
-          url,
+          path,
           data: {'key': 'value', 'timestamp': DateTime.now().toIso8601String()},
         );
       }
@@ -69,26 +112,17 @@ class _HomePageState extends State<HomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             ElevatedButton(
-              onPressed: () => _makeRequest(
-                'https://jsonplaceholder.typicode.com/posts/1',
-                'GET',
-              ),
+              onPressed: () => _makeRequest('/posts/1', 'GET'),
               child: const Text('GET Success (200)'),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () => _makeRequest(
-                'https://jsonplaceholder.typicode.com/posts',
-                'POST',
-              ),
+              onPressed: () => _makeRequest('/posts', 'POST'),
               child: const Text('POST Success (201)'),
             ),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () => _makeRequest(
-                'https://jsonplaceholder.typicode.com/unknown-url',
-                'GET',
-              ),
+              onPressed: () => _makeRequest('/unknown-url', 'GET'),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
               child: const Text('GET 404 Error'),
             ),

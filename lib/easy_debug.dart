@@ -1,4 +1,5 @@
 export 'src/core/log_manager.dart' show EasyDebugManager;
+export 'src/core/config_model.dart' show AppEnvironment;
 export 'src/core/log_model.dart'
     show
         NetworkLog,

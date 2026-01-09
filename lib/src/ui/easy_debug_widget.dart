@@ -1,7 +1,10 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../core/log_manager.dart';
+import '../core/config_model.dart';
 import 'log_list_view.dart';
+
+enum DebugViewMode { logs, settings }
 
 class EasyDebugWidget extends StatefulWidget {
   final Widget child;
@@ -22,6 +25,7 @@ class _EasyDebugWidgetState extends State<EasyDebugWidget> {
   // Initial position for the floating button
   Offset _buttonPosition = const Offset(20, 100);
   LogFilter _currentFilter = LogFilter.all;
+  DebugViewMode _viewMode = DebugViewMode.logs;
 
   void closeConsole() {
     if (mounted) {
@@ -67,7 +71,7 @@ class _EasyDebugWidgetState extends State<EasyDebugWidget> {
                                   child: Container(
                                     decoration: BoxDecoration(
                                       color: Colors.white.withValues(
-                                        alpha: 0.7,
+                                        alpha: 0.95,
                                       ),
                                       borderRadius: BorderRadius.circular(16),
                                       border: Border.all(
@@ -89,12 +93,16 @@ class _EasyDebugWidgetState extends State<EasyDebugWidget> {
                                     child: Column(
                                       children: [
                                         _buildHeader(),
-                                        _buildFilterTabs(),
-                                        Expanded(
-                                          child: LogListView(
-                                            filter: _currentFilter,
+                                        if (_viewMode ==
+                                            DebugViewMode.logs) ...[
+                                          _buildFilterTabs(),
+                                          Expanded(
+                                            child: LogListView(
+                                              filter: _currentFilter,
+                                            ),
                                           ),
-                                        ),
+                                        ] else
+                                          Expanded(child: _buildSettingsView()),
                                       ],
                                     ),
                                   ),
@@ -171,19 +179,40 @@ class _EasyDebugWidgetState extends State<EasyDebugWidget> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Text(
-            'Easy Debug Console',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Text(
+            _viewMode == DebugViewMode.logs ? 'Easy Debug' : 'Environment',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           Row(
             children: [
-              IconButton(
-                icon: const Icon(Icons.delete_outline),
-                tooltip: "Clear Logs",
-                onPressed: () {
-                  EasyDebugManager().clearLogs();
-                },
-              ),
+              if (_viewMode == DebugViewMode.logs)
+                IconButton(
+                  icon: const Icon(Icons.settings),
+                  tooltip: "Settings",
+                  onPressed: () {
+                    setState(() {
+                      _viewMode = DebugViewMode.settings;
+                    });
+                  },
+                )
+              else
+                IconButton(
+                  icon: const Icon(Icons.list),
+                  tooltip: "Logs",
+                  onPressed: () {
+                    setState(() {
+                      _viewMode = DebugViewMode.logs;
+                    });
+                  },
+                ),
+              if (_viewMode == DebugViewMode.logs)
+                IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  tooltip: "Clear Logs",
+                  onPressed: () {
+                    EasyDebugManager().clearLogs();
+                  },
+                ),
               IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: () => setState(() => _isConsoleVisible = false),
@@ -192,6 +221,66 @@ class _EasyDebugWidgetState extends State<EasyDebugWidget> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSettingsView() {
+    final manager = EasyDebugManager();
+    if (manager.availableEnvironments.isEmpty) {
+      return const Center(
+        child: Text(
+          "No environments configured.\nCall EasyDebugManager().init() first.",
+          textAlign: TextAlign.center,
+          style: TextStyle(color: Colors.grey),
+        ),
+      );
+    }
+
+    return ValueListenableBuilder<AppEnvironment?>(
+      valueListenable: manager.currentEnvNotifier,
+      builder: (context, currentEnv, _) {
+        return ListView(
+          children: [
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text(
+                "Select Environment",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey,
+                ),
+              ),
+            ),
+            ...manager.availableEnvironments.map((env) {
+              final isSelected = currentEnv == env;
+              return ListTile(
+                title: Text(
+                  env.name,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+                subtitle: Text(
+                  env.baseUrl,
+                  style: const TextStyle(fontSize: 12),
+                ),
+                trailing: isSelected
+                    ? const Icon(Icons.check_circle, color: Colors.blueAccent)
+                    : const Icon(Icons.circle_outlined, color: Colors.grey),
+                onTap: () {
+                  manager.changeEnvironment(env);
+                },
+              );
+            }),
+            const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text(
+                "Note: Switching environment might require a manual app restart if your Dio instance is not reactive.",
+                style: TextStyle(fontSize: 12, color: Colors.orange),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

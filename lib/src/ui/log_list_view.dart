@@ -65,9 +65,25 @@ class LogListView extends StatelessWidget {
       dense: true,
       onTap: () {
         EasyDebugWidget.close(context);
-        EasyDebugNavigatorObserver.navigatorState?.push(
-          MaterialPageRoute(builder: (_) => LogDetailPage(log: log)),
+        final route = MaterialPageRoute(
+          builder: (_) => LogDetailPage(log: log),
         );
+
+        // 1. Try using the observer (Best for getting the top-most context)
+        if (EasyDebugNavigatorObserver.navigatorState != null) {
+          EasyDebugNavigatorObserver.navigatorState!.push(route);
+          return;
+        }
+
+        // 2. Fallback: Use the context from the overlay
+        // We use rootNavigator: true to break out of any nested navigators
+        try {
+          Navigator.of(context, rootNavigator: true).push(route);
+        } catch (e) {
+          debugPrint(
+            'EasyDebug: Navigation failed. Please add EasyDebugNavigatorObserver to your MaterialApp/GoRouter.',
+          );
+        }
       },
       leading: Container(
         width: 50,
