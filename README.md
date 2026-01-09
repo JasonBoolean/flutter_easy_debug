@@ -6,9 +6,10 @@ A pure Dart, lightweight, and powerful in-app network debugger for Flutter.
 ## Screenshots
 
 <div style="text-align: center">
-  <img src="screenshots/screenshot_1.png" width="30%" />
-  <img src="screenshots/screenshot_2.png" width="30%" />
-  <img src="screenshots/screenshot_3.png" width="30%" />
+  <img src="screenshots/screenshot_1.png" width="22%" />
+  <img src="screenshots/Screenshot_2.png" width="22%" />
+  <img src="screenshots/screenshot_3.png" width="22%" />
+  <img src="screenshots/Screenshot_4.png" width="22%" />
 </div>
 
 ## Features
@@ -16,6 +17,7 @@ A pure Dart, lightweight, and powerful in-app network debugger for Flutter.
 *   🚀 **Pure Dart**: No native dependencies, works on all Flutter platforms (Android, iOS, Web, Desktop).
 *   📱 **Floating Overlay**: Always accessible Draggable floating button.
 *   💎 **Glassmorphism UI**: Modern, semi-transparent design.
+*   🌍 **Environment Switcher**: Switch API environments (Dev/Prod) at runtime with persistence.
 *   🔍 **Detailed Inspection**: View headers, body, timestamp, and duration for Requests and Responses.
 *   📂 **Categorization**: Filter logs by "All", "Success", or "Error" tabs.
 *   📋 **Smart Copy**: One-tap copy for Request/Response content (JSON formatted).
@@ -75,6 +77,59 @@ final dio = Dio();
 
 // Add the interceptor
 dio.interceptors.add(EasyDebugDioInterceptor());
+```
+
+## Environment Switching
+
+Easy Debug allows you to switch API environments (e.g., Dev, Test, Prod) at runtime.
+
+### 1. Initialize Environments
+
+Initialize the manager with your environment list in `main()` before `runApp`.
+
+```dart
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  await EasyDebugManager().init(environments: [
+      const AppEnvironment(
+        name: 'Production',
+        baseUrl: 'https://api.example.com',
+        isDefault: true,
+      ),
+       const AppEnvironment(
+        name: 'Development',
+        baseUrl: 'https://dev.api.example.com',
+      ),
+  ]);
+  
+  runApp(const MyApp());
+}
+```
+
+### 2. Use Dynamic Base URL
+
+Update your Dio client to listen for environment changes.
+
+```dart
+class _MyAppState extends State<MyApp> {
+  final Dio _dio = Dio();
+
+  @override
+  void initState() {
+    super.initState();
+    // Set initial URL
+    _dio.options.baseUrl = EasyDebugManager().currentBaseUrl;
+    
+    // Listen for changes
+    EasyDebugManager().currentEnvNotifier.addListener(() {
+      final newEnv = EasyDebugManager().currentEnvNotifier.value;
+      if (newEnv != null) {
+        _dio.options.baseUrl = newEnv.baseUrl;
+      }
+    });
+  }
+}
 ```
 
 ## Usage

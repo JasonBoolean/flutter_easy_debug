@@ -1,3 +1,8 @@
+## 0.0.3
+
+*   **[DOCS] Update README**: Added comprehensive documentation for Environment Switcher feature.
+*   **[FIX] UI Polish**: Fixed glassmorphism opacity issue in settings view (was too opaque).
+
 ## 0.0.2
 
 *   **[NEW] Environment Switcher**: Added support for managing and switching API environments (e.g., Dev/Prod) at runtime.
