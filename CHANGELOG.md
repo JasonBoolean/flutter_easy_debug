@@ -1,3 +1,10 @@
+## 0.0.4
+
+*   **[NEW] General Logs**: Added "Logs" tab to display `debugPrint` and `EasyDebug.log` messages with auto-coloring (Error/Warning/Info).
+*   **[NEW] Universal Http Support**: Added `EasyDebugHttpClient` wrapper to support standard `http` package debugging.
+*   **[UI] Tab Navigation**: New specialized Header with Tabs (Network / Logs / Settings).
+*   **[UI] Visual Polish**: Improved log list readability with zebra striping and smart copy.
+
 ## 0.0.3
 
 *   **[DOCS] Update README**: Added comprehensive documentation for Environment Switcher feature.
