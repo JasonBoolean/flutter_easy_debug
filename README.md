@@ -174,7 +174,7 @@ EasyDebugManager().updateConfig(
     clearOnNavigation: false, // Auto clear logs when navigating pages
   ),
 );
-
+```
 
 
 ## Author
@@ -184,4 +184,4 @@ Created by **JasonBoolean**.
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-```
+
