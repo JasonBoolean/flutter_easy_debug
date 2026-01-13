@@ -6,21 +6,26 @@ A pure Dart, lightweight, and powerful in-app network debugger for Flutter.
 ## Screenshots
 
 <div style="text-align: center">
-  <img src="screenshots/screenshot_1.png" width="22%" />
-  <img src="screenshots/screenshot_2.png" width="22%" />
-  <img src="screenshots/screenshot_4.png" width="22%" />
-  <img src="screenshots/screenshot_3.png" width="22%" />
+  <img src="screenshots/1.png" width="30%" />
+  <img src="screenshots/2.png" width="30%" />
+  <img src="screenshots/3.png" width="30%" />
+</div>
+<div style="text-align: center">
+  <img src="screenshots/4.png" width="30%" />
+  <img src="screenshots/5.png" width="30%" />
 </div>
 
 ## Features
 
 *   🚀 **Pure Dart**: No native dependencies, works on all Flutter platforms (Android, iOS, Web, Desktop).
+*   🌐 **Universal Network Support**: Supports both **Dio** and standard **http** package.
+*   📝 **General Logs**: Capture `debugPrint` and `EasyDebug.log` messages in a dedicated terminal-style tab.
 *   📱 **Floating Overlay**: Always accessible Draggable floating button.
 *   💎 **Glassmorphism UI**: Modern, semi-transparent design.
 *   🌍 **Environment Switcher**: Switch API environments (Dev/Prod) at runtime with persistence.
 *   🔍 **Detailed Inspection**: View headers, body, timestamp, and duration for Requests and Responses.
-*   📂 **Categorization**: Filter logs by "All", "Success", or "Error" tabs.
-*   📋 **Smart Copy**: One-tap copy for Request/Response content (JSON formatted).
+*   📂 **Categorization**: Filter network logs by "All", "Success", or "Error" tabs.
+*   📋 **Smart Copy**: One-tap copy for Request/Response/Log content.
 *   🧹 **Log Management**: Auto-clearing (optional) and manual clear support.
 
 ## Installation
@@ -79,6 +84,20 @@ final dio = Dio();
 dio.interceptors.add(EasyDebugDioInterceptor());
 ```
 
+### 3. Usage with clean `http` package (If necessary)
+
+To debug requests made with the `http` package, simply wrap your client with `EasyDebugHttpClient`.
+
+```dart
+import 'package:http/http.dart' as http;
+import 'package:easy_debug/easy_debug.dart';
+
+final client = EasyDebugHttpClient(http.Client());
+
+// Use as normal
+final response = await client.get(Uri.parse('https://example.com'));
+```
+
 ## Environment Switching
 
 Easy Debug allows you to switch API environments (e.g., Dev, Test, Prod) at runtime.
@@ -99,6 +118,7 @@ void main() async {
       ),
        const AppEnvironment(
         name: 'Development',
+        baseUrl: 'https://dev.api.example.com',
         baseUrl: 'https://dev.api.example.com',
       ),
   ]);
@@ -135,10 +155,12 @@ class _MyAppState extends State<MyApp> {
 ## Usage
 
 *   **Open Console**: Tap the 🐞 floating button.
-*   **Move Button**: Drag the floating button to any position.
-*   **View Details**: Tap any log item to see full Request/Response details.
-*   **Filter**: Use the tabs (All, Success, Error) to filter the list.
-*   **Copy**: Inside the detail page, tap the generic Copy icon in the top right to copy the content of the *currently selected tab* (Request or Response).
+*   **Switch Views**: Use the header tabs to switch between **Network**, **Logs**, and **Settings**.
+*   **Network Tab**: View Dio/Http requests. Filter by "All", "Success", or "Error".
+*   **Logs Tab**: View `debugPrint` output with timestamp and coloring. Tap any row to copy.
+*   **Settings Tab**: Switch environments.
+*   **View Details**: Tap any network log item to see full Request/Response details.
+*   **Smart Copy**: Tap the copy icon in detailed view, or tap any row in the Logs tab to copy content.
 *   **Clear Logs**: Tap the Trash icon in the console header.
 
 ## Configuration
@@ -152,6 +174,8 @@ EasyDebugManager().updateConfig(
     clearOnNavigation: false, // Auto clear logs when navigating pages
   ),
 );
+
+
 
 ## Author
 

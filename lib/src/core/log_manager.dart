@@ -17,6 +17,9 @@ class EasyDebugManager {
   /// List of all network logs
   final ValueNotifier<List<NetworkLog>> logsNotifier = ValueNotifier([]);
 
+  /// List of general logs (print/debugPrint)
+  final ValueNotifier<List<GeneralLog>> generalLogsNotifier = ValueNotifier([]);
+
   /// Available environments
   List<AppEnvironment> _availableEnvironments = [];
   List<AppEnvironment> get availableEnvironments => _availableEnvironments;
@@ -26,6 +29,15 @@ class EasyDebugManager {
 
   /// Initialize the manager with available environments
   Future<void> init({required List<AppEnvironment> environments}) async {
+    // Intercept debugPrint
+    final originalDebugPrint = debugPrint;
+    debugPrint = (String? message, {int? wrapWidth}) {
+      if (message != null) {
+        addGeneralLog(message);
+      }
+      originalDebugPrint(message, wrapWidth: wrapWidth);
+    };
+
     _availableEnvironments = environments;
     if (_availableEnvironments.isEmpty) return;
 
@@ -78,13 +90,25 @@ class EasyDebugManager {
     _enforceMaxLogCount();
   }
 
-  void updateLog(NetworkLog log) {
-    // Notify listeners that a log has changed
-    logsNotifier.value = List.from(logsNotifier.value);
+  void updateLog(NetworkLog updatedLog) {
+    final currentLogs = List<NetworkLog>.from(logsNotifier.value);
+    final index = currentLogs.indexWhere((l) => l.id == updatedLog.id);
+    if (index != -1) {
+      currentLogs[index] = updatedLog;
+      logsNotifier.value = currentLogs;
+    }
+  }
+
+  void addGeneralLog(String message) {
+    final currentLogs = List<GeneralLog>.from(generalLogsNotifier.value);
+    currentLogs.add(GeneralLog(timestamp: DateTime.now(), message: message));
+    generalLogsNotifier.value = currentLogs;
+    // We might want to enforce max count here too, but let's keep it simple for now or reuse logic
   }
 
   void clearLogs() {
     logsNotifier.value = [];
+    generalLogsNotifier.value = [];
   }
 
   void _enforceMaxLogCount() {

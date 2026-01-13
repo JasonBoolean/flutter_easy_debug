@@ -20,11 +20,11 @@ class NetworkLog {
   final DateTime timestamp;
   final String method;
   final String url;
-  
+
   RequestDetails? request;
   ResponseDetails? response;
   ErrorDetails? error;
-  
+
   int? durationMs;
 
   NetworkLog({
@@ -34,9 +34,33 @@ class NetworkLog {
     required this.url,
   }) : id = id ?? DateTime.now().microsecondsSinceEpoch.toString();
 
-  bool get isError => error != null || (response != null && (response!.statusCode ?? 200) >= 400);
+  bool get isError =>
+      error != null ||
+      (response != null && (response!.statusCode ?? 200) >= 400);
 
   int get statusCode => response?.statusCode ?? 0;
+
+  NetworkLog copyWith({
+    String? id,
+    DateTime? timestamp,
+    String? method,
+    String? url,
+    RequestDetails? request,
+    ResponseDetails? response,
+    ErrorDetails? error,
+    int? durationMs,
+  }) {
+    return NetworkLog(
+        id: id ?? this.id,
+        timestamp: timestamp ?? this.timestamp,
+        method: method ?? this.method,
+        url: url ?? this.url,
+      )
+      ..request = request ?? this.request
+      ..response = response ?? this.response
+      ..error = error ?? this.error
+      ..durationMs = durationMs ?? this.durationMs;
+  }
 }
 
 class RequestDetails {
@@ -44,11 +68,7 @@ class RequestDetails {
   final dynamic body;
   final String contentType;
 
-  RequestDetails({
-    this.headers = const {},
-    this.body,
-    this.contentType = '',
-  });
+  RequestDetails({this.headers = const {}, this.body, this.contentType = ''});
 }
 
 class ResponseDetails {
@@ -77,4 +97,12 @@ class ErrorDetails {
     this.errorObject,
     this.stackTrace,
   });
+}
+
+class GeneralLog {
+  final DateTime timestamp;
+  final String message;
+  final String? level; // e.g., 'INFO', 'ERROR'
+
+  GeneralLog({required this.timestamp, required this.message, this.level});
 }

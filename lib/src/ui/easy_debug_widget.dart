@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import '../core/log_manager.dart';
 import '../core/config_model.dart';
 import 'log_list_view.dart';
+import 'general_logs_view.dart';
 
-enum DebugViewMode { logs, settings }
+enum DebugViewMode { network, generalLogs, settings }
 
 class EasyDebugWidget extends StatefulWidget {
   final Widget child;
@@ -25,7 +26,7 @@ class _EasyDebugWidgetState extends State<EasyDebugWidget> {
   // Initial position for the floating button
   Offset _buttonPosition = const Offset(20, 100);
   LogFilter _currentFilter = LogFilter.all;
-  DebugViewMode _viewMode = DebugViewMode.logs;
+  DebugViewMode _viewMode = DebugViewMode.network;
 
   void closeConsole() {
     if (mounted) {
@@ -93,16 +94,7 @@ class _EasyDebugWidgetState extends State<EasyDebugWidget> {
                                     child: Column(
                                       children: [
                                         _buildHeader(),
-                                        if (_viewMode ==
-                                            DebugViewMode.logs) ...[
-                                          _buildFilterTabs(),
-                                          Expanded(
-                                            child: LogListView(
-                                              filter: _currentFilter,
-                                            ),
-                                          ),
-                                        ] else
-                                          Expanded(child: _buildSettingsView()),
+                                        Expanded(child: _buildContent()),
                                       ],
                                     ),
                                   ),
@@ -144,6 +136,22 @@ class _EasyDebugWidgetState extends State<EasyDebugWidget> {
     );
   }
 
+  Widget _buildContent() {
+    switch (_viewMode) {
+      case DebugViewMode.network:
+        return Column(
+          children: [
+            _buildFilterTabs(),
+            Expanded(child: LogListView(filter: _currentFilter)),
+          ],
+        );
+      case DebugViewMode.generalLogs:
+        return const GeneralLogsView();
+      case DebugViewMode.settings:
+        return _buildSettingsView();
+    }
+  }
+
   Widget _buildFloatingButton({bool isDragging = false}) {
     return Material(
       color: Colors.transparent,
@@ -179,47 +187,63 @@ class _EasyDebugWidgetState extends State<EasyDebugWidget> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            _viewMode == DebugViewMode.logs ? 'Easy Debug' : 'Environment',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          const Text(
+            'Easy Debug',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
-          Row(
-            children: [
-              if (_viewMode == DebugViewMode.logs)
-                IconButton(
-                  icon: const Icon(Icons.settings),
-                  tooltip: "Settings",
-                  onPressed: () {
-                    setState(() {
-                      _viewMode = DebugViewMode.settings;
-                    });
-                  },
-                )
-              else
-                IconButton(
-                  icon: const Icon(Icons.list),
-                  tooltip: "Logs",
-                  onPressed: () {
-                    setState(() {
-                      _viewMode = DebugViewMode.logs;
-                    });
-                  },
-                ),
-              if (_viewMode == DebugViewMode.logs)
-                IconButton(
-                  icon: const Icon(Icons.delete_outline),
-                  tooltip: "Clear Logs",
-                  onPressed: () {
-                    EasyDebugManager().clearLogs();
-                  },
-                ),
-              IconButton(
-                icon: const Icon(Icons.close),
-                onPressed: () => setState(() => _isConsoleVisible = false),
-              ),
-            ],
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.grey.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            padding: const EdgeInsets.all(2),
+            child: Row(
+              children: [
+                _buildTabIcon(Icons.wifi, DebugViewMode.network),
+                _buildTabIcon(Icons.notes, DebugViewMode.generalLogs),
+                _buildTabIcon(Icons.settings, DebugViewMode.settings),
+              ],
+            ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.delete_outline),
+            tooltip: "Clear Logs",
+            onPressed: () {
+              EasyDebugManager().clearLogs();
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.close),
+            onPressed: () => setState(() => _isConsoleVisible = false),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildTabIcon(IconData icon, DebugViewMode mode) {
+    final isSelected = _viewMode == mode;
+    return GestureDetector(
+      onTap: () => setState(() => _viewMode = mode),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.white : Colors.transparent,
+          borderRadius: BorderRadius.circular(6),
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.05),
+                    blurRadius: 2,
+                  ),
+                ]
+              : null,
+        ),
+        child: Icon(
+          icon,
+          size: 20,
+          color: isSelected ? Colors.blueAccent : Colors.grey,
+        ),
       ),
     );
   }

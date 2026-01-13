@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_debug/easy_debug.dart';
 import 'package:dio/dio.dart';
+import 'package:http/http.dart' as http;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -54,11 +55,13 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final Dio _dio = Dio();
+  late EasyDebugHttpClient _httpClient;
 
   @override
   void initState() {
     super.initState();
     _dio.interceptors.add(EasyDebugDioInterceptor());
+    _httpClient = EasyDebugHttpClient(http.Client());
 
     // 1. Set initial BaseUrl
     _dio.options.baseUrl = EasyDebugManager().currentBaseUrl;
@@ -71,6 +74,7 @@ class _HomePageState extends State<HomePage> {
   void dispose() {
     // 3. Remove listener to prevent memory leaks
     EasyDebugManager().currentEnvNotifier.removeListener(_onEnvChanged);
+    _httpClient.close();
     super.dispose();
   }
 
@@ -103,46 +107,96 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  Future<void> _makeHttpRequest() async {
+    try {
+      // Use hardcoded URL for simple http demo, or construct from baseUrl
+      final baseUrl =
+          EasyDebugManager().currentEnvNotifier.value?.baseUrl ??
+          'https://jsonplaceholder.typicode.com';
+      final url = Uri.parse('$baseUrl/todos/1');
+      await _httpClient.get(url);
+    } catch (e) {
+      debugPrint('Http Request failed: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Easy Debug Demo')),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            ElevatedButton(
-              onPressed: () => _makeRequest('/posts/1', 'GET'),
-              child: const Text('GET Success (200)'),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => _makeRequest('/posts', 'POST'),
-              child: const Text('POST Success (201)'),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => _makeRequest('/unknown-url', 'GET'),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-              child: const Text('GET 404 Error'),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () =>
-                  _makeRequest('https://invalid-domain.test', 'GET'),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-              child: const Text('Connection Error'),
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(
-                  context,
-                ).push(MaterialPageRoute(builder: (_) => const SecondPage()));
-              },
-              child: const Text('Navigate to Second Page'),
-            ),
-          ],
+      body: ListView(
+        padding: const EdgeInsets.all(24),
+        children: [
+          _buildSectionHeader('Dio Requests'),
+          ElevatedButton(
+            onPressed: () => _makeRequest('/posts/1', 'GET'),
+            child: const Text('GET Success (200)'),
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton(
+            onPressed: () => _makeRequest('/posts', 'POST'),
+            child: const Text('POST Success (201)'),
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton(
+            onPressed: () => _makeRequest('/unknown-url', 'GET'),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
+            child: const Text('GET 404 Error'),
+          ),
+          const SizedBox(height: 12),
+          ElevatedButton(
+            onPressed: () => _makeRequest('https://invalid-domain.test', 'GET'),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Connection Error'),
+          ),
+
+          const SizedBox(height: 32),
+          _buildSectionHeader('Http Package Requests'),
+          ElevatedButton(
+            onPressed: _makeHttpRequest,
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.purple),
+            child: const Text('Make http.Client Request'),
+          ),
+
+          const SizedBox(height: 32),
+          _buildSectionHeader('General Logs'),
+          ElevatedButton(
+            onPressed: () {
+              debugPrint('This is a test log at ${DateTime.now()}');
+              print(
+                'This print() might be captured if we used runZoned, but for now debugPrint is safer.',
+              );
+              debugPrint('Warning: This is a simulated warning message.');
+              debugPrint('Error: This is a simulated error message!');
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.grey),
+            child: const Text('Print General Logs (Info/Warn/Error)'),
+          ),
+
+          const SizedBox(height: 32),
+          _buildSectionHeader('Navigation'),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const SecondPage()));
+            },
+            child: const Text('Navigate to Second Page'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87,
         ),
       ),
     );

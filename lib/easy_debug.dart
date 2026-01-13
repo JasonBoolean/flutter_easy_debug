@@ -9,4 +9,5 @@ export 'src/core/log_model.dart'
         EasyDebugConfig;
 export 'src/core/easy_debug_navigator_observer.dart';
 export 'src/network/dio_interceptor.dart';
+export 'src/network/easy_debug_http_client.dart';
 export 'src/ui/easy_debug_widget.dart';
